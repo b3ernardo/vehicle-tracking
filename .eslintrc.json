@@ -6,7 +6,6 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:typescript-sort-keys/recommended",
     "plugin:prettier/recommended",
     "prettier"
   ],
@@ -18,10 +17,7 @@
   },
   "plugins": [
     "@typescript-eslint",
-    "eslint-plugin-import-helpers",
-    "typescript-sort-keys",
-    "sort-destructure-keys",
-    "sort-keys"
+    "eslint-plugin-import-helpers"
   ],
   "rules": {
     "import-helpers/order-imports": [
@@ -44,12 +40,6 @@
       {
         "endOfLine": "auto"
       }
-    ],
-    "sort-destructure-keys/sort-destructure-keys": [
-      "error",
-      { "caseSensitive": false }
-    ],
-    "sort-keys": 0,
-    "sort-keys/sort-keys-fix": "warn"
+    ]
   }
 }

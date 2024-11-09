@@ -1,10 +1,9 @@
 import { Logger } from '@nestjs/common';
-import * as net from 'net';
 
 const logger = new Logger('TCP');
 
-function parseMsg(packet: string) {
-  if (packet.length !== 24 && packet.length !== 66 && packet.length !== 70) {
+export function parseMsg(packet: string) {
+  if (packet.length !== 24 && packet.length !== 70) {
     logger.error(`Invalid message length: ${packet.length}`);
     return;
   }
@@ -26,37 +25,10 @@ function parseMsg(packet: string) {
   }
 
   return {
-    deviceId: parseInt(deviceId, 16),
-    footer,
     header,
-    payload,
+    deviceId: parseInt(deviceId, 16),
     type: parseInt(type, 16),
+    payload,
+    footer,
   };
-}
-
-export function handleData(clientSocket: net.Socket, data: Buffer) {
-  const pingCommandType = 1;
-  const pingLocationType = 2;
-  const packet = data.toString('hex').toUpperCase();
-  const parsedMsg = parseMsg(packet);
-
-  if (!parsedMsg) {
-    logger.warn('Message parsing failed');
-    clientSocket.end();
-    return;
-  }
-
-  logger.log(`Data received: ${packet}`);
-
-  if (parsedMsg.type === pingCommandType) {
-    const pingAckMsg = `50F701${parsedMsg.payload}73C4`;
-    clientSocket.write(Buffer.from(pingAckMsg, 'hex'));
-    logger.log(`Ping ACK sent to client: ${pingAckMsg}`);
-  }
-
-  if (parsedMsg.type === pingLocationType) {
-    // TODO: Tratamendo da mensagem de tipo Location
-  }
-
-  clientSocket.end();
 }
