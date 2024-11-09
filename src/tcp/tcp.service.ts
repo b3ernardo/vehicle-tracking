@@ -1,3 +1,9 @@
+import {
+  PING_COMMAND_TYPE,
+  LOCATION_COMMAND_TYPE,
+  HEADER,
+  FOOTER,
+} from '../common/constants';
 import { Sft9001Service } from '../sft9001/sft9001.service';
 import { parseMsg } from './utils/utils';
 
@@ -45,8 +51,6 @@ export class TcpService implements OnModuleInit {
   }
 
   private handleData(clientSocket: net.Socket, data: Buffer) {
-    const pingCommandType = 1;
-    const locationCommandType = 2;
     const packet = data.toString('hex').toUpperCase();
     const parsedMsg = parseMsg(packet);
 
@@ -58,15 +62,15 @@ export class TcpService implements OnModuleInit {
 
     this.logger.log(`Data received: ${packet}`);
 
-    if (parsedMsg.type === pingCommandType) {
-      const pingAckMsg = `50F701${parsedMsg.payload}73C4`;
+    if (parsedMsg.type === PING_COMMAND_TYPE) {
+      const pingAckMsg = `${HEADER}${parsedMsg.payload}${FOOTER}`;
       clientSocket.write(
         Buffer.from('Ping ACK received: ' + pingAckMsg.toUpperCase()),
       );
       this.logger.log(`Ping ACK sent to client: ${pingAckMsg}`);
     }
 
-    if (parsedMsg.type === locationCommandType) {
+    if (parsedMsg.type === LOCATION_COMMAND_TYPE) {
       this.sft9001Service.saveLocationData(
         parsedMsg.deviceId,
         parsedMsg.payload,
@@ -74,5 +78,7 @@ export class TcpService implements OnModuleInit {
       clientSocket.write(Buffer.from('Location received'));
       this.logger.log(`Location sent to client`);
     }
+
+    clientSocket.end();
   }
 }
