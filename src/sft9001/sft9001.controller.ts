@@ -1,3 +1,4 @@
+import { AuthGuard } from '../auth/auth.guard';
 import { SFT9001 } from './interfaces/sft9001.interface';
 import { Sft9001Service } from './sft9001.service';
 
@@ -7,6 +8,7 @@ import {
   Param,
   NotFoundException,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 
 @Controller('api/v1')
@@ -14,6 +16,7 @@ export class Sft9001Controller {
   constructor(private readonly sft9001Service: Sft9001Service) {}
 
   @Get('location/:device_id')
+  @UseGuards(AuthGuard)
   getLocation(@Param('device_id', ParseIntPipe) deviceId: number): SFT9001 {
     const locationData = this.sft9001Service.getLocationData(deviceId);
 
