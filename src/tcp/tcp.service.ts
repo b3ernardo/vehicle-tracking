@@ -15,6 +15,7 @@ export class TcpService implements OnModuleInit {
   constructor(private readonly sft9001Service: Sft9001Service) {}
 
   private tcpServer: net.Server;
+  private readonly activeDevices = new Map<number, number>();
   private readonly logger = new Logger('TCP');
 
   onModuleInit() {
@@ -63,6 +64,9 @@ export class TcpService implements OnModuleInit {
     this.logger.log(`Data received: ${packet}`);
 
     if (parsedMsg.type === PING_COMMAND_TYPE) {
+      // Atualiza o timestamp do dispositivo no Map
+      this.activeDevices.set(parsedMsg.deviceId, Date.now());
+
       const pingAckMsg = `${HEADER}${parsedMsg.payload}${FOOTER}`;
       clientSocket.write(
         Buffer.from('Ping ACK received: ' + pingAckMsg.toUpperCase()),
@@ -71,12 +75,27 @@ export class TcpService implements OnModuleInit {
     }
 
     if (parsedMsg.type === LOCATION_COMMAND_TYPE) {
-      this.sft9001Service.saveLocationData(
-        parsedMsg.deviceId,
-        parsedMsg.payload,
-      );
-      clientSocket.write(Buffer.from('Location received'));
-      this.logger.log(`Location sent to client`);
+      // Verifica se o último ping foi há menos de 2 minutos
+      const lastPing = this.activeDevices.get(parsedMsg.deviceId);
+      const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+
+      if (lastPing && lastPing >= twoMinutesAgo) {
+        this.sft9001Service.saveLocationData(
+          parsedMsg.deviceId,
+          parsedMsg.payload,
+        );
+        clientSocket.write(Buffer.from('Location received'));
+        this.logger.log(
+          `Location data saved for deviceId ${parsedMsg.deviceId}`,
+        );
+      } else {
+        clientSocket.write(
+          Buffer.from('Location data rejected; Ping required'),
+        );
+        this.logger.warn(
+          `Location data rejected for deviceId ${parsedMsg.deviceId}; Ping required`,
+        );
+      }
     }
 
     clientSocket.end();
