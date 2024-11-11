@@ -8,6 +8,10 @@ The `TcpService` receives, validates, and interprets incoming packets, passing t
 
 The endpoint `/api/v1/location/:device_id` allows the frontend to query the latest known location of a specific vehicle, returning all relevant information (latitude, longitude, speed, among others). For security, an access control is used to restrict location visibility to authorized users only.
 
+If the `TCP_PORT` and `PORT` are not defined in the `.env` file, default values will be used:
+- `TCP_PORT`: 8080
+- `PORT`: 3000
+
 ## Project setup
 
 1. Clone the repository:
@@ -43,7 +47,7 @@ The following manual testing instructions are for Linux environments. For best r
 
 The `HeartbeatService` automatically sends a heartbeat every 2 minutes with a standard message of `50F70A3F730150494E4773C4`. You can change this message directly in the code if needed, as long as it adheres to the required format. Additionally, a heartbeat (ping) can be manually sent using the command in Step 1 below. To send a new location message, use only the terminal as shown in Step 3.
 
-When the server responds with `"Location received"`, it means the location has been successfully saved in the database for the specified `device_id`. However, if the `device_id` has not successfully pinged in the last 2 minutes, a warning message will appear in the terminal: `"Location data rejected for deviceId <device_id>; Ping required"`.
+When the server responds with `Location received`, it means the location has been successfully saved in the database for the specified `device_id`. However, if the `device_id` has not successfully pinged in the last 2 minutes, a warning message will appear in the terminal: `Location data rejected for deviceId <device_id>; Ping required`. Additionally, warnings will be generated if the distance, latitude, longitude, or direction values fall outside their expected ranges. These warnings will also be displayed in the terminal to notify the user.
 
 ### Steps to manually test the application:
 
@@ -136,3 +140,24 @@ When the server responds with `"Location received"`, it means the location has b
         "longitude": 43.938493
     }
    ````
+   
+## Project structure
+
+The project is organized primarily under the `src` folder. The key services in the project include:
+
+- Users Service: Stores a fake dataset of users.
+- Auth Service: Handles authorization for accessing the endpoint that retrieves the latest location of a device.
+- Heartbeat Service: A testing service that sends a heartbeat every 2 minutes.
+- TCP Service: Initiates the TCP connection and processes the received data in hexadecimal format.
+- SFT9001 Service: Implements the device logic. It contains a fake database (using a Map structure) that stores the latest location for each `device_id`. This service also includes validations for the range of distance, latitude, longitude, and direction.
+  
+This structure allows the project to be modular and organized, with each service handling a specific aspect of the application.
+
+## Possible improvements to be implemented
+
+- Improving authentication and authorization: Making the process more secure by avoiding key exposure and encrypting data.
+- User registration with a database: Replacing the fake database with a real one to store users, ensuring data persistence and scalability.
+- Using QuestDB for location data: Storing temporal location data efficiently with QuestDB.
+- Storing historical location data: Implementing a way to store the historical location of the device in memory, enabling tracking and retrieval of past locations.
+- Frontend: Creating a web interface to simplify testing and interacting with the application.
+- Improving tests: Expanding test coverage to include more edge cases
