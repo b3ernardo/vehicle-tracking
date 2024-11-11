@@ -1,6 +1,6 @@
-# Softruck Vehicle Tracking System
+# Vehicle Tracking System
 
-The Softruck vehicle tracking system receives millions of GPS points daily, sent by SFT9001 trackers installed in vehicles. These devices communicate via hexadecimal messages over a TCP connection. Each message contains either location data or a heartbeat (connection check), and the server is responsible for responding with an ACK to ensure the continuity of transmissions.
+The vehicle tracking system receives millions of GPS points daily, sent by SFT9001 trackers installed in vehicles. These devices communicate via hexadecimal messages over a TCP connection. Each message contains either location data or a heartbeat (connection check), and the server is responsible for responding with an ACK to ensure the continuity of transmissions.
 
 Trackers follow a well-defined packet structure, including a header, device identifier, message type, and variable data depending on the message type. The system follows the FIFO protocol, meaning the last received point represents the vehicle's latest known location.
 
