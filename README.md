@@ -1,99 +1,138 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Softruck Vehicle Tracking System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The Softruck vehicle tracking system receives millions of GPS points daily, sent by SFT9001 trackers installed in vehicles. These devices communicate via hexadecimal messages over a TCP connection. Each message contains either location data or a heartbeat (connection check), and the server is responsible for responding with an ACK to ensure the continuity of transmissions.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Trackers follow a well-defined packet structure, including a header, device identifier, message type, and variable data depending on the message type. The system follows the FIFO protocol, meaning the last received point represents the vehicle's latest known location.
 
-## Description
+The `TcpService` receives, validates, and interprets incoming packets, passing them to the `Sft9001Service` for storage. The `Sft9001Service` also performs consistency checks on data like latitude, longitude, direction, and distance traveled before storing.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The endpoint `/api/v1/location/:device_id` allows the frontend to query the latest known location of a specific vehicle, returning all relevant information (latitude, longitude, speed, among others). For security, an access control is used to restrict location visibility to authorized users only.
 
 ## Project setup
 
-```bash
-$ npm install
-```
+1. Clone the repository:
+
+    ```bash
+    $ git clone https://github.com/b3ernardo/vehicle-tracking.git
+    ```
+
+2. Navigate to the project directory and install dependencies:
+
+    ```bash
+    $ npm install
+    ```
+
+3. Install [Postman](https://www.postman.com/downloads/) to test the authentication and access control for the `/api/v1/location/:device_id` API route. Postman will be essential for sending and verifying authenticated requests to this endpoint.
+
 
 ## Compile and run the project
 
 ```bash
-# development
 $ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
+````
 
 ## Run tests
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
 $ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```
 
-## Deployment
+## Manual testing
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+The following manual testing instructions are for Linux environments. For best results, it's recommended to use a Linux system.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+The `HeartbeatService` automatically sends a heartbeat every 2 minutes with a standard message of `50F70A3F730150494E4773C4`. You can change this message directly in the code if needed, as long as it adheres to the required format. Additionally, a heartbeat (ping) can be manually sent using the command in Step 1 below. To send a new location message, use only the terminal as shown in Step 3.
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+When the server responds with `"Location received"`, it means the location has been successfully saved in the database for the specified `device_id`. However, if the `device_id` has not successfully pinged in the last 2 minutes, a warning message will appear in the terminal: `"Location data rejected for deviceId <device_id>; Ping required"`.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Steps to manually test the application:
 
-## Resources
+1. Send a Heartbeat (Ping) Request to the Server using netcat
 
-Check out a few resources that may come in handy when working with NestJS:
+   You can manually send a heartbeat message to the server as follows:
+   
+   ```bash
+   $ echo -n 50F70A3F730150494E4773C4 | xxd -r -p | nc -v localhost 8080
+   ````
+   
+2. Receive the Server's Ping ACK Response
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+   After sending the heartbeat message, the server should respond with a Ping ACK message:
+   
+   ```bash
+   $ 50F70150494E4773C4
+   ````
 
-## Support
+3. Send a Location Request to the Server using netcat
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+   To manually send a location update:
+   
+   ```bash
+   $ echo -n 50F70A3F73025EFCF950156F017D784000008CA0F80084003C013026A1029E72BD73C4 | xxd -r -p | nc -v localhost 8080
+   ````
 
-## Stay in touch
+4. Receive Confirmation of Location Saved
+   
+   When the server responds with `Location received`, it confirms that the location data has been saved in the database for the given `device_id`.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+5. User Authentication with JWT
 
-## License
+   The application uses a fake database that registers two users:
+   
+   ```json
+    {
+      userId: 1,
+      username: '671603',
+      password: 'password',
+    },
+    {
+      userId: 2,
+      username: '273445',
+      password: 'password',
+    }
+   ````
+   Where the `username` is equal to the `device_id`. To authenticate, follow these steps:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+   5.1. Send a POST request to `http://localhost:3000/auth/login`, passing the following JSON in the Body, for example
+   
+      ```json
+      {
+        username: '671603',
+        password: 'password',
+      }
+     ````
+
+   5.2. Use the token to access the location route
+   
+   With the accessToken generated, send a GET request to the route `http://localhost:3000/api/v1/location/671603`, passing the token in the `Authorization` tab of Postman:
+   - Select the `Bearer Token` option.
+   - Paste the accessToken in the `token` field.
+   This will authorize access to your device’s location route, and you will receive the corresponding location data.
+   Otherwise, if the token is invalid or does not match the `device_id`, you will receive an Unauthorized status.
+
+6. Expected Response Object
+
+   If authorized, the retrieved object should resemble the following structure:
+
+   ```json
+    {
+        "deviceId": 671603,
+        "epochData": "2020-07-01T21:00:00.000Z",
+        "direction": 54.87,
+        "distance": 25000000,
+        "operatingTime": 36000,
+        "composition": {
+            "gpsFixed": 1,
+            "gpsLive": 1,
+            "ignition": 1,
+            "latitudeNegative": 1,
+            "longitudeNegative": 1,
+            "reserved": [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            ]
+        },
+        "speed": 60,
+        "latitude": 19.932833,
+        "longitude": 43.938493
+    }
+   ````
