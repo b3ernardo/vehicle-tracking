@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
+
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
+
+  <p align="center">This project was built with NestJS, a progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+
 # Vehicle Tracking System
 
 The vehicle tracking system receives millions of GPS points daily, sent by SFT9001 trackers installed in vehicles. These devices communicate via hexadecimal messages over a TCP connection. Each message contains either location data or a heartbeat (connection check), and the server is responsible for responding with an ACK to ensure the continuity of transmissions.
