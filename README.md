@@ -95,7 +95,7 @@ When the server responds with `Location received`, it means the location has bee
       password: 'password',
     }
    ````
-   Where the `username` is equal to the `device_id`. To authenticate, follow these steps:
+   Where the `username` is equal to the `device_id` (decimal value). To authenticate, follow these steps:
 
    5.1. Send a POST request to `http://localhost:3000/auth/login`, passing the following JSON in the Body, for example
    
