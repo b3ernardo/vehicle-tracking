@@ -37,7 +37,7 @@ export function parseMsg(packet: string) {
   return {
     header,
     deviceId: parseInt(deviceId, 16),
-    type: parseInt(type, 16),
+    type,
     payload,
     footer,
   };

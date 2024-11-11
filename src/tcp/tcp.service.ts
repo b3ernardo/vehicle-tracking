@@ -67,7 +67,7 @@ export class TcpService implements OnModuleInit {
       // Atualiza o timestamp do dispositivo no Map
       this.activeDevices.set(parsedMsg.deviceId, Date.now());
 
-      const pingAckMsg = `${HEADER}${parsedMsg.payload}${FOOTER}`;
+      const pingAckMsg = `${HEADER}${parsedMsg.type}${parsedMsg.payload}${FOOTER}`;
       clientSocket.write(
         Buffer.from('Ping ACK received: ' + pingAckMsg.toUpperCase()),
       );
